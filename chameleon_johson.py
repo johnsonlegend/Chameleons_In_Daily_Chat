@@ -16,8 +16,9 @@ from gensim.test.utils import common_texts, get_tmpfile
 
 
 DEBUG = 1
-TESTFILE = 7
+TESTFILE = 12
 TESTLINE = 3000
+COSINE_SIMILAR_THRESHOLD = 0.8
 
 
 def read_clean_data(fname):
@@ -57,6 +58,8 @@ def calculate_word2vec(conv, model, stopwords):
 	for i in range(n - 1):
 		senten1 = conv[i][1]
 		senten2 = conv[i+1][1]
+		word_1 = []
+		word_2 = []
 		senten_vec1 = []
 		senten_vec2 = []
 
@@ -64,24 +67,43 @@ def calculate_word2vec(conv, model, stopwords):
 		for word in senten1:
 			if word not in stopwords:
 				try:
-					senten_vec1.append(model[word])
+					senten_vec1.append(model[word.lower()])
+					word_1.append(word.lower())
 				except Exception as e:
 					e = 0
 		for word in senten2:
 			if word not in stopwords:
 				try:
-					senten_vec2.append(model[word])
+					senten_vec2.append(model[word.lower()])
+					word_2.append(word.lower())
 				except Exception as e:
 					e = 0
+
+		# Store word pair, in order to check whether the top 3 similarity scores make sense
+		word_pair = []
+		for word1 in word_1:
+			for word2 in word_2:
+				word_pair.append((word1, word2))
 
 		# Calculate similarity score
 		similar_score = []
 		for vec1 in senten_vec1:
 			for vec2 in senten_vec2:
-				similar_score.append(np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)))
+				# Cosine similarity
+				cosine_similar = np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+				# if cosine_similar == 1.0:
+				# 	cosine_similar = 0
+				similar_score.append(cosine_similar)
+
+		# Choose top 3 scores
 		similar_score_top3 = sorted(similar_score, reverse=True)[:3]
-		if (len(similar_score_top3) > 0):
+		if (len(similar_score_top3) == 3):
+			# if (similar_score_top3[-1] >= COSINE_SIMILAR_THRESHOLD):
 			similar_score_top3_list.append(similar_score_top3)
+
+		for score in similar_score_top3:
+			idx = similar_score.index(score)
+			# print(word_pair[idx])
 
 	return similar_score_top3_list
 
@@ -115,7 +137,8 @@ def main():
 
 		# Calculate word2vec similarity
 		similar_score_top3_list = calculate_word2vec(conv, model, stopwords)
-		print(np.sum(np.sum(similar_score_top3_list)))
+		# print(similar_score_top3_list)
+		print(np.sum(np.sum(similar_score_top3_list)) / len(similar_score_top3_list))
 
 
 
