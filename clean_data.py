@@ -16,6 +16,7 @@ def output_to_file(file, obj):
 def read_file(input_file):
     with open(input_file) as f:
         content = f.read()
+        content = re.sub(r"\t"," ", content)
         content = re.sub(r"\(.*\)","", content)
         content = re.sub(r'[^\w \n\:]', '', content)
         content = re.sub(r'\d', '', content)
