@@ -16,6 +16,7 @@ fw_type = {
 	'NEGATE' : 7,
 	'QUANT' : 8
 }
+fw_len = len(fw_type)
 
 def load_liwc():
 	f = open("LIWC.2015.all","r")
@@ -48,7 +49,8 @@ def combine_conv(conv):
 		if conv[idx][0] == conv[idx + 1][0]:
 			line[1] += conv[idx + 1][1]
 		else:
-			conv_combined.append(line)
+			if len(line[1]) > 5:
+				conv_combined.append(line)
 			line = conv[idx + 1]
 	conv_combined.append(line)
 	return conv_combined
@@ -57,7 +59,7 @@ def combine_conv(conv):
 def extract_fw(line):
 	
 
-	fw = np.zeros(9)
+	fw = np.zeros(fw_len)
 	for w in line[1]:
 		if liwc.get(w):
 			for type in liwc[w]:
@@ -69,17 +71,17 @@ def extract_fw(line):
 def analysis(conv):
 	conv_combined = combine_conv(conv)
 
-	fw_avg = np.zeros(9)
+	fw_avg = np.zeros(fw_len)
 	fw_all = []
 	for line in conv_combined:
 		person, fw = extract_fw(line)
 		fw_all.append(fw)
 		fw_avg += fw
 
-	fw_given = np.zeros(9)
+	fw_given = np.zeros(fw_len)
 
 	for i in range(len(fw_all) - 1):
-		for tag_idx in range(9):
+		for tag_idx in range(fw_len):
 			if fw_all[i][tag_idx] == 1:
 				fw_given[tag_idx] += fw_all[i + 1][tag_idx]
 	fw_avg = sum(fw_all)/len(fw_all)
@@ -90,7 +92,7 @@ def analysis(conv):
 	return fw_given_avg - fw_avg
 if __name__ == '__main__':
 	load_liwc()
-	res = np.zeros(9)
+	res = np.zeros(fw_len)
 	for num in range (1,61):
 		conv = load_conversation(num)
 		res += analysis(conv)
