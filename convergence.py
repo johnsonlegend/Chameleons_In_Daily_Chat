@@ -17,6 +17,18 @@ fw_type = {
 	'QUANT' : 8
 }
 fw_len = len(fw_type)
+label = []
+
+def load_label():
+	f = open("label","r")
+	line = f.readline()
+	while line:
+		if line.split(" ")[2] == "yes\n":
+			label.append(True)
+		else:
+			label.append(False)
+		line = f.readline()
+	f.close()
 
 def load_liwc():
 	f = open("LIWC.2015.all","r")
@@ -90,11 +102,26 @@ def analysis(conv):
 	# print(fw_given_avg - fw_avg)
 
 	return fw_given_avg - fw_avg
+
 if __name__ == '__main__':
+	load_label()
 	load_liwc()
+	num_close = sum(label)
+
+	# close relationship
 	res = np.zeros(fw_len)
 	for num in range (1,61):
-		conv = load_conversation(num)
-		res += analysis(conv)
-	print(res/60)
+		if label[num - 1] == True:
+			conv = load_conversation(num)
+			res += analysis(conv)
+	print(res/num_close)
+
+	# non-close relationship
+
+	res = np.zeros(fw_len)
+	for num in range (1,61):
+		if label[num - 1] == False:
+			conv = load_conversation(num)
+			res += analysis(conv)
+	print(res/(60 - num_close))
 	
