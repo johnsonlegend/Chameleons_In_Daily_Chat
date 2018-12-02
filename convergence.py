@@ -2,6 +2,7 @@ import pickle
 import sys
 import re
 import numpy as np
+import matplotlib.pyplot as plt
 
 #liwc: [token : list of tags]
 liwc = {}
@@ -103,25 +104,46 @@ def analysis(conv):
 
 	return fw_given_avg - fw_avg
 
+def result(num_close, close):
+	all_res = []
+	res = np.zeros(fw_len)
+	for num in range (1,61):
+		if label[num - 1] == close:
+			conv = load_conversation(num)
+			all_res.append(analysis(conv))
+			res += analysis(conv)
+	if close:
+		avg_res = res/num_close
+	else:
+		avg_res = res/(60 - num_close)
+	all_res = np.array(all_res)
+
+	return all_res, avg_res
+	# plt.boxplot(all_res)
+	
+
 if __name__ == '__main__':
 	load_label()
 	load_liwc()
 	num_close = sum(label)
 
-	# close relationship
-	res = np.zeros(fw_len)
-	for num in range (1,61):
-		if label[num - 1] == True:
-			conv = load_conversation(num)
-			res += analysis(conv)
-	print(res/num_close)
+	close_res, avg_close_res = result(num_close, True)
+	non_close_res, avg_non_close_res = result(num_close, False)
 
-	# non-close relationship
+	# print(avg_close_res)
+	# print(avg_non_close_res)
 
-	res = np.zeros(fw_len)
-	for num in range (1,61):
-		if label[num - 1] == False:
-			conv = load_conversation(num)
-			res += analysis(conv)
-	print(res/(60 - num_close))
+	close_cap=['Close','Non-close']
+
+	pos = 2 * np.arange(len(avg_close_res))
+	bar_width = 0.8
+
+	plt.bar(pos, avg_close_res, color = 'red')
+	plt.bar(pos + bar_width, avg_non_close_res, color = 'blue')
+
+	x_label = ["PRONOUN", "IPRON","ARTICLE","PREP","AUXVERB","ADVERB","CONJ","NEGATE","QUANT"]
+	plt.xticks(pos, x_label, rotation=30)
+	plt.legend(close_cap,loc=2)
+
 	
+	plt.show()
